@@ -14,28 +14,6 @@ from cvHelper import *
 #enable_switch = GPIO(160, "in")
 
 
-# # === MOVEMENT STUFF ===
-# import Adafruit_PCA9685
-
-# def map_pulse(val, inMin, inMax, outMin, outMax):
-#     return int((val - inMin) * (outMax - outMin) / (inMax - inMin) + outMin);
-
-# pwm = Adafruit_PCA9685.PCA9685()
-# freq = 100
-# pwm.set_pwm_freq(freq)
-# #Channels
-# steer     = 0
-# gas       = 2
-# relay     = 3
-# # Steering
-# steer_mid = 600
-# steer_max = 800
-# steer_min = 400
-# # Gas
-# gas_min = 400 #450
-# gas_max = 800 #850
-
-
 steeringDullness = 75 #set between 1 and 100. eg: 30 means line/object must move across 30% of the image width to get 100% steering output
                             #2018 tweak this, since we're polling the camera much faster.    
 
@@ -50,7 +28,7 @@ while(1):
     #_,frame = cap.read()
     frame=cv2.imread('straightdummy.png')
     frame = resizeMe(frame,3)
-    height, width = frame.shape[0], frame.shape[1]
+    height, width = int(frame.shape[0]), int(frame.shape[1])
 
     img_hsv = cv2.cvtColor(frame, cv2.COLOR_BGR2HSV)
     
@@ -78,26 +56,32 @@ while(1):
     #obstacle avoidance and vector correction 
     if obs.leftX > yellowLine.centerY and obs.rightX < blueLine.centerY:            #2018  if the object is between the left and right lines (yellow, blue)
         if (obs.leftX - yellowLine.centerY) < (blueLine.centerY - obs.rightX):        #2018 decide which way around obstacle to go , around left or right..? what about equal?
-            left_of_arc = obs.rightX                #2018 LOA and ROA?
-            right_of_arc = blueLine.centerX             #what if there are a bunch of objects on the road?
+            leftCol = obs.rightX                #2018 LOA and ROA?
+            rightCol = blueLine.centerX             #what if there are a bunch of objects on the road?
         else:
-            left_of_arc = yellowLine.centerX
-            right_of_arc = obs.leftX
+            leftCol = yellowLine.centerX
+            rightCol = obs.leftX
     else:
-        left_of_arc = yellowLine.centerX
-        right_of_arc = blueLine.centerX
+        leftCol = yellowLine.centerX
+        rightCol = blueLine.centerX
 
     #steering dullness/sharpness
-    left_of_arc = left_of_arc * 100 / steeringDullness
-    if left_of_arc > width:
-        left_of_arc = width
+    leftCol = leftCol
+    if leftCol > width:
+        leftCol = width
 
-    right_of_arc = width - (width - right_of_arc) * 100 / steeringDullness
-    if right_of_arc < 0:
-        right_of_arc = 0
+    rightCol = width - (width - rightCol)
+    if rightCol < 0:
+        rightCol = 0
 
-    angle = ((left_of_arc+right_of_arc)/2) * 100 / width
-    angle = 100 - angle
+    steerSpot = (((leftCol+rightCol)/2), int(height/1.1))
+    leftTop = (leftCol, 0)
+    leftBot = (leftCol, height)
+
+    rightTop = (rightCol, 0 )
+    rightBot = (rightCol, height)
+
+
 
     #steer_pulse = map_pulse(angle, 40, 132, steer_min, steer_max)
     #pwm.set_pwm(steer, 0, steer_pulse)
@@ -110,6 +94,12 @@ while(1):
     pur = cv2.bitwise_and(frame,frame, mask=maskpurple)
     yel = cv2.bitwise_and(frame,frame, mask=maskyellow)
     grn = cv2.bitwise_and(frame,frame, mask=maskgreen)
+    botMid = (width/2, height)
+    cv2.arrowedLine(res, botMid, steerSpot, (255,255,255), 3)
+
+    cv2.line(res, leftTop, leftBot, (0,255,255), 1)
+    cv2.line(res, rightTop, rightBot, (255,0,0), 1)
+    
 
 #    cv2.imshow("blue", blu)
 #    cv2.imshow("purple", pur)
