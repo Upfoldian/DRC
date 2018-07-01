@@ -16,7 +16,7 @@ from cvHelper import *
 
 steeringDullness = 75 #set between 1 and 100. eg: 30 means line/object must move across 30% of the image width to get 100% steering output
                             #2018 tweak this, since we're polling the camera much faster.    
-
+flag = False
 #cap = cv2.VideoCapture(0)    
 #while(cap.isOpened()):    
 while(1):
@@ -54,13 +54,18 @@ while(1):
     #TODO: write height and width in comment
 
     #obstacle avoidance and vector correction 
-    if obs.leftX > yellowLine.centerY and obs.rightX < blueLine.centerY:            #2018  if the object is between the left and right lines (yellow, blue)
-        if (obs.leftX - yellowLine.centerY) < (blueLine.centerY - obs.rightX):        #2018 decide which way around obstacle to go , around left or right..? what about equal?
-            rightCol = obs.rightX                #2018 LOA and ROA?
-            leftCol = blueLine.centerX             #what if there are a bunch of objects on the road?
+    if (flag == False):
+        print "W: ", width, "H: ", height
+        print "YX: ", yellowLine.centerX, "YY: ", yellowLine.centerY
+        print "LeftX: ", obs.leftX, "YCent: ", yellowLine.centerX, " | RightX: ", obs.rightX, " BCent: ", blueLine.centerX
+        flag = True
+    if obs.leftX < yellowLine.centerX and obs.rightX > blueLine.centerX:            #2018  if the object is between the left and right lines (yellow, blue)
+        if (yellowLine.centerX - obs.rightX) > (obs.leftX - blueLine.centerX):        #2018 decide which way around obstacle to go , around left or right..? what about equal?
+            rightCol = yellowLine.centerX               #2018 LOA and ROA?
+            leftCol =  obs.rightX             #what if there are a bunch of objects on the road?
         else:
-            rightCol = yellowLine.centerX
-            leftCol = obs.leftX
+            rightCol = obs.leftCol
+            leftCol = blueLine.centerX
     else:
         rightCol = yellowLine.centerX
         leftCol = blueLine.centerX
@@ -74,7 +79,7 @@ while(1):
     if rightCol < 0:
         rightCol = 0
 
-    steerSpot = (((leftCol+rightCol)/2), int(height/1.1))
+    steerSpot = (((leftCol+rightCol)/2), int(height/2))
     leftTop = (leftCol, 0)
     leftBot = (leftCol, height)
 
@@ -108,7 +113,7 @@ while(1):
 #    cv2.imshow("green", grn)
     cv2.imshow("all", res)
 
-#    time.sleep(0.3); print "Time delay operating"
+    #time.sleep(0.3); #print "Time delay operating"
     if cv2.waitKey(1) & 0xFF == ord('q'):
         break
 
