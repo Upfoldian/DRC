@@ -26,7 +26,7 @@ while(1):
     #     time.sleep(1)
 
     #_,frame = cap.read()
-    frame=cv2.imread('straightdummy.png')
+    frame=cv2.imread('obsdummy.png')
     frame = resizeMe(frame,3)
     height, width = int(frame.shape[0]), int(frame.shape[1])
 
@@ -56,21 +56,21 @@ while(1):
     #obstacle avoidance and vector correction 
     if obs.leftX > yellowLine.centerY and obs.rightX < blueLine.centerY:            #2018  if the object is between the left and right lines (yellow, blue)
         if (obs.leftX - yellowLine.centerY) < (blueLine.centerY - obs.rightX):        #2018 decide which way around obstacle to go , around left or right..? what about equal?
-            leftCol = obs.rightX                #2018 LOA and ROA?
-            rightCol = blueLine.centerX             #what if there are a bunch of objects on the road?
+            rightCol = obs.rightX                #2018 LOA and ROA?
+            leftCol = blueLine.centerX             #what if there are a bunch of objects on the road?
         else:
-            leftCol = yellowLine.centerX
-            rightCol = obs.leftX
+            rightCol = yellowLine.centerX
+            leftCol = obs.leftX
     else:
-        leftCol = yellowLine.centerX
-        rightCol = blueLine.centerX
+        rightCol = yellowLine.centerX
+        leftCol = blueLine.centerX
 
     #steering dullness/sharpness
-    leftCol = leftCol
+    #leftCol = leftCol
     if leftCol > width:
         leftCol = width
 
-    rightCol = width - (width - rightCol)
+    #rightCol = width - (width - rightCol)
     if rightCol < 0:
         rightCol = 0
 
@@ -94,11 +94,11 @@ while(1):
     pur = cv2.bitwise_and(frame,frame, mask=maskpurple)
     yel = cv2.bitwise_and(frame,frame, mask=maskyellow)
     grn = cv2.bitwise_and(frame,frame, mask=maskgreen)
+    # Draws some helper lines
     botMid = (width/2, height)
     cv2.arrowedLine(res, botMid, steerSpot, (255,255,255), 3)
-
-    cv2.line(res, leftTop, leftBot, (0,255,255), 1)
-    cv2.line(res, rightTop, rightBot, (255,0,0), 1)
+    cv2.line(res, leftTop, leftBot, (255,0,0), 1)
+    cv2.line(res, rightTop, rightBot, (0,255,255), 1)
     
 
 #    cv2.imshow("blue", blu)
