@@ -88,9 +88,7 @@ while(1):
 
 
 
-    #steer_pulse = map_pulse(angle, 40, 132, steer_min, steer_max)
-    #pwm.set_pwm(steer, 0, steer_pulse)
-    #print(str(steer_pulse))
+    
     
 
     res = cv2.bitwise_and(frame,frame, mask=maskyellow+maskblue+maskred)
@@ -105,6 +103,24 @@ while(1):
     cv2.line(res, leftTop, leftBot, (255,0,0), 1)
     cv2.line(res, rightTop, rightBot, (0,255,255), 1)
     
+    o = steerSpot[1]
+    a = float(abs(steerSpot[0] - botMid[0]))
+    if (a != 0):
+        angle = np.arctan(o / a)
+        angle = np.rad2deg(angle)
+    else: 
+        angle = 0
+
+    if (angle > 25) :
+        angle = 25
+        steerSpot = ((height-steerSpot[1])/np.tan(np.rad2deg(25)), steerSpot[1])
+    elif (angle < -25):
+        angle = -25
+        steerSpot[0] = ((height-steerSpot[1])/np.tan(np.rad2deg(-25)), steerSpot[1])
+    print angle
+    #steer_pulse = map_pulse(angle, -25, 25, steer_min, steer_max)
+    #pwm.set_pwm(steer, 0, steer_pulse)
+    #print(str(steer_pulse))
 
 #    cv2.imshow("blue", blu)
 #    cv2.imshow("purple", pur)
@@ -112,7 +128,7 @@ while(1):
 #    cv2.imshow("red", red)
 #    cv2.imshow("green", grn)
     cv2.imshow("all", res)
-
+#    cv2.imwrite("outright.png", res)
     #time.sleep(0.3); #print "Time delay operating"
     if cv2.waitKey(1) & 0xFF == ord('q'):
         break
