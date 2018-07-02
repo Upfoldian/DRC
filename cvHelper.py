@@ -7,13 +7,20 @@ import numpy as np
 from object import Object
 
 # === OpenCV ===
-min_pixel_detect     = 20
+min_pixel_detect     = 100
 blurksize            = 1 #5
 dilateksize          = 2 #5
 
 #Set up the various kernels - the blur, dilate and disparity (close holes) kernels
 blurkernel         = np.ones((blurksize,blurksize),np.uint8)
 dilatekernel     = np.ones((dilateksize,dilateksize),np.uint8)
+
+def chromatifyMe(frame):
+    retframe=frame.copy().astype(float)
+    sumframe = np.sum(frame,2)
+    sumframe = sumframe.reshape(sumframe.shape[0],sumframe.shape[1],1).repeat(3,2)
+    retframe = np.round(np.divide(retframe, sumframe, out=np.zeros_like(retframe), where=sumframe!=0)*255.)
+    return np.uint8(retframe)
 
 def resizeMe(frame, scl):
     return cv2.resize(frame,(0,0),fx=1./scl,fy=1./scl)                #rescale it. 
@@ -60,15 +67,15 @@ def colourMaskMe(frame,color):
         upper = np.array([40,255,255])
 
     if(color=="blue"): # blue for the right side
-        lower = np.array([90,75,75])
-        upper = np.array([110,255,255])
+        lower = np.array([100,75,75])
+        upper = np.array([125,255,255])
 
     if(color=="red"): #red for other cars
         lower= np.array([160,75,75])
         upper= np.array([255,255,255])
 
     if(color=="purple"): #purple for obstacles
-        lower = np.array([115,75,75])
+        lower = np.array([130,75,75])
         upper = np.array([160,255,255])
 
     if(color=="green"): #green for finishline

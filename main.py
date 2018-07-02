@@ -17,17 +17,21 @@ from cvHelper import *
 steeringDullness = 75 #set between 1 and 100. eg: 30 means line/object must move across 30% of the image width to get 100% steering output
                             #2018 tweak this, since we're polling the camera much faster.    
 flag = False
-#cap = cv2.VideoCapture(0)    
+cap = cv2.VideoCapture(0)    
+
+pastAngles = [0,0,0,0,0] # used to smooth out
 #while(cap.isOpened()):    
 while(1):
     # ON Button code
-    # while(not enable_switch.read()):
-    #     # We want to pause the program        
-    #     time.sleep(1)
+    #while(not enable_switch.read()):
+        # We want to pause the program    
+	#pwm.set_pwm(steer, 0, 600)    
+        #time.sleep(1)
 
     #_,frame = cap.read()
-    frame=cv2.imread('obsdummy.png')
+    frame=cv2.imread('obsflipdummy.png')
     frame = resizeMe(frame,3)
+   #frame = chromatifyMe(frame)
     height, width = int(frame.shape[0]), int(frame.shape[1])
 
     img_hsv = cv2.cvtColor(frame, cv2.COLOR_BGR2HSV)
@@ -44,10 +48,17 @@ while(1):
     yellowLine = Object(*centroidAndBoundsFinder(pixels_yellow, maskyellow, 0))
     obs        = Object(*centroidAndBoundsFinder(pixels_red, maskred, 0))
 
+    if (yellowLine.centerX == 0):
+	yellowLine = Object(width-4, width-4, width-4, height/2)
+    if (blueLine.centerX == 0):
+	blueLine = Object(4,4,4, height/2)
+
     drawBlueLineContours(frame, pixels_blue, maskblue, 0)
     drawYellowLineContours(frame, pixels_yellow, maskyellow, 0)
     drawRedObjectContours(frame, pixels_red, maskred, 0)
 
+    yellowLine.centerX = yellowLine.leftX + (yellowLine.centerX-yellowLine.leftX)/2 
+    blueLine.centerX = blueLine.centerX +  (blueLine.rightX-blueLine.centerX)/2
 
     #NEED TO ADD GREEN FOR FINISHLINE!!!
 
@@ -64,7 +75,7 @@ while(1):
             rightCol = yellowLine.centerX               #2018 LOA and ROA?
             leftCol =  obs.rightX             #what if there are a bunch of objects on the road?
         else:
-            rightCol = obs.leftCol
+            rightCol = obs.leftX
             leftCol = blueLine.centerX
     else:
         rightCol = yellowLine.centerX
@@ -87,8 +98,6 @@ while(1):
     rightBot = (rightCol, height)
 
 
-
-    
     
 
     res = cv2.bitwise_and(frame,frame, mask=maskyellow+maskblue+maskred)
@@ -99,28 +108,42 @@ while(1):
     grn = cv2.bitwise_and(frame,frame, mask=maskgreen)
     # Draws some helper lines
     botMid = (width/2, height)
-    cv2.arrowedLine(res, botMid, steerSpot, (255,255,255), 3)
+    
     cv2.line(res, leftTop, leftBot, (255,0,0), 1)
     cv2.line(res, rightTop, rightBot, (0,255,255), 1)
     
-    o = steerSpot[1]
+    o = height - steerSpot[1]
     a = float(abs(steerSpot[0] - botMid[0]))
+        
     if (a != 0):
         angle = np.arctan(o / a)
-        angle = np.rad2deg(angle)
+        angle = 90 - np.rad2deg(angle)
     else: 
         angle = 0
+    if (steerSpot[0] - botMid[0] < 0):
+	   angle = angle * -1
 
-    if (angle > 25) :
-        angle = 25
-        steerSpot = ((height-steerSpot[1])/np.tan(np.rad2deg(25)), steerSpot[1])
+    if (angle > 25):
+	   angle = 25
     elif (angle < -25):
-        angle = -25
-        steerSpot[0] = ((height-steerSpot[1])/np.tan(np.rad2deg(-25)), steerSpot[1])
-    print angle
-    #steer_pulse = map_pulse(angle, -25, 25, steer_min, steer_max)
+	   angle = -25
+
+    #Tries to smooth out steering by taking average of last 5 frames
+    for i in range(len(pastAngles)-1):
+        pastAngles[-2-i+1] = pastAngles[-2-i]
+    pastAngles[0] = angle
+    avg = sum(pastAngles)/5.0
+
+    o = height/2.0 * np.tan(np.deg2rad(avg))
+    avgPoint = (int(botMid[0] + o), int(height/2))
+
+    time.sleep(3)
+    #print angle
+    cv2.arrowedLine(res, botMid, steerSpot, (255,255,255), 3)
+    cv2.arrowedLine(res, botMid, avgPoint, (0, 255, 0), 3)
+    #steer_pulse = map_pulse(avg, -25, 25, steer_min, steer_max)
     #pwm.set_pwm(steer, 0, steer_pulse)
-    #print(str(steer_pulse))
+#    print "Angle: ", int(angle), " Steer: ", steer_pulse
 
 #    cv2.imshow("blue", blu)
 #    cv2.imshow("purple", pur)
