@@ -9,7 +9,7 @@ from object import Object
 # === OpenCV ===
 min_pixel_detect     = 100
 blurksize            = 1 #5
-dilateksize          = 2 #5
+dilateksize          = 5 #5
 
 #Set up the various kernels - the blur, dilate and disparity (close holes) kernels
 blurkernel         = np.ones((blurksize,blurksize),np.uint8)
