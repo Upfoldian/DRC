@@ -27,13 +27,14 @@ gas_mid = 600
 
 
 
-print('Middle pwm')
-pwm.set_pwm(gas, 0, gas_mid)
-time.sleep(2)
-
-print('zoom')
-pwm.set_pwm(gas, 0, 700)
-time.sleep(2)
+print('Killing pwm')
 pwm.set_pwm(gas, 0, 0)
-print('done')
+pwm.set_pwm(steer, 0, 0)
+
+
+#print('zoom')
+#pwm.set_pwm(gas, 0, 700)
+#time.sleep(2)
+#pwm.set_pwm(gas, 0, 0)
+#print('done')
 
